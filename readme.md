@@ -38,7 +38,7 @@ flowchart TD
     %% User interaction starts after deployment
     step17 --> step18["18. User Makes Prediction Requests"]
     
-    %% AWS Services supporting the flow (shown on right)
+    %% AWS Services supporting the flow
     step4 -.-> s3[(S3 Bucket\nmy-mlops-demo-bucket-lhc)]
     step5 -.-> sm1[SageMaker Training\nml.m5.xlarge]
     step8 -.-> sm2[SageMaker Evaluation]
