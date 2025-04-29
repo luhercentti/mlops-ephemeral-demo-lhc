@@ -1,0 +1,216 @@
+name: MLOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # Optional: Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 sagemaker pandas scikit-learn
+      
+      - name: Upload data to S3
+        run: |
+          python -c "
+          import boto3
+          import sagemaker
+          sm_session = sagemaker.Session(boto3.session.Session())
+          train_data_uri = sm_session.upload_data(
+              path='data/train.csv', 
+              bucket='my-mlops-demo-bucket-lhc',
+              key_prefix='sentiment-analysis/data'
+          )
+          test_data_uri = sm_session.upload_data(
+              path='data/test.csv',
+              bucket='my-mlops-demo-bucket-lhc',
+              key_prefix='sentiment-analysis/data'
+          )
+          print(f'Train data URI: {train_data_uri}')
+          print(f'Test data URI: {test_data_uri}')
+          "
+      
+      - name: Train model with SageMaker
+        id: training
+        run: |
+          python scripts/train_model.py \
+            --bucket my-mlops-demo-bucket-lhc \
+            --prefix sentiment-analysis \
+            --hyperparameters "{'max_depth': 5, 'n_estimators': 100}" \
+            --instance-type ml.m5.xlarge
+          
+          echo "training_job_name=$(cat training_job_name.txt)" >> $GITHUB_OUTPUT
+          
+      - name: Save job info for next steps
+        run: echo "${{ steps.training.outputs.training_job_name }}" > training_job_name.txt
+        
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: training-info
+          path: |
+            training_job_name.txt
+
+  evaluate-model:
+    needs: train-model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 sagemaker pandas scikit-learn
+      
+      - name: Download training info
+        uses: actions/download-artifact@v3
+        with:
+          name: training-info
+      
+      - name: Evaluate model
+        id: evaluation
+        run: |
+          TRAINING_JOB_NAME=$(cat training_job_name.txt)
+          python scripts/evaluate_model.py --training-job-name $TRAINING_JOB_NAME
+          
+          # Decide if model meets quality threshold (simplified)
+          ACCURACY=$(cat evaluation_results.json | jq -r '.accuracy')
+          echo "model_accuracy=$ACCURACY" >> $GITHUB_OUTPUT
+          if (( $(echo "$ACCURACY > 0.8" | bc -l) )); then
+            echo "model_approved=true" >> $GITHUB_OUTPUT
+          else
+            echo "model_approved=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload evaluation results
+        uses: actions/upload-artifact@v3
+        with:
+          name: evaluation-results
+          path: |
+            evaluation_results.json
+            training_job_name.txt
+
+  register-model:
+    needs: evaluate-model
+    runs-on: ubuntu-latest
+    if: ${{ needs.evaluate-model.outputs.model_approved == 'true' }}
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 sagemaker
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: evaluation-results
+      
+      - name: Register model in registry
+        id: register
+        run: |
+          TRAINING_JOB_NAME=$(cat training_job_name.txt)
+          python scripts/register_model.py \
+            --training-job-name $TRAINING_JOB_NAME \
+            --model-package-group-name SentimentAnalysisModels \
+            --evaluation-file evaluation_results.json
+          
+          echo "model_package_arn=$(cat model_package_arn.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Upload model info
+        uses: actions/upload-artifact@v3
+        with:
+          name: model-info
+          path: |
+            model_package_arn.txt
+
+  deploy-model:
+    needs: register-model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 sagemaker
+      
+      - name: Download model info
+        uses: actions/download-artifact@v3
+        with:
+          name: model-info
+      
+      - name: Deploy model
+        run: |
+          MODEL_PACKAGE_ARN=$(cat model_package_arn.txt)
+          python scripts/deploy_model.py \
+            --model-package-arn $MODEL_PACKAGE_ARN \
+            --endpoint-name sentiment-analysis-endpoint \
+            --instance-type ml.t2.medium \
+            --instance-count 1
+      
+      - name: Setup monitoring
+        run: |
+          python scripts/setup_monitoring.py \
+            --endpoint-name sentiment-analysis-endpoint \
+            --monitoring-schedule-name sentiment-model-monitoring \
+            --instance-type ml.m5.xlarge \
+            --schedule '0 * ? * * *'
