@@ -1,63 +1,9 @@
-# ML Deployment Diagram
 
-```mermaid
-flowchart TD
-    %% Starting point
-    start(("Trigger: Push/PR\nto Main Branch"))
-    
-    %% Sequential Flow with numbering
-    start --> step1["1. GitHub Actions Workflow Starts"]
-    
-    %% Job 1: Train Model - Sequential steps
-    step1 --> step2["2. Checkout Code"]
-    step2 --> step3["3. Configure AWS"]
-    step3 --> step4["4. Upload Data to S3"]
-    step4 --> step5["5. Train Model with SageMaker"]
-    step5 --> step6["6. Save Training Job Info"]
-    
-    %% Job 2: Evaluate Model - Sequential steps
-    step6 --> step7["7. Download Training Info"]
-    step7 --> step8["8. Evaluate Model Performance"]
-    step8 --> decision{"9. Accuracy > 0.8?"}
-    
-    %% Branching based on decision
-    decision -->|No| end1["Pipeline Stops"]
-    decision -->|Yes| step10["10. Upload Evaluation Results"]
-    
-    %% Job 3: Register Model - Sequential steps
-    step10 --> step11["11. Download Evaluation Results"]
-    step11 --> step12["12. Register Model in SageMaker Registry"]
-    step12 --> step13["13. Save Model Package ARN"]
-    
-    %% Job 4: Deploy Model - Sequential steps
-    step13 --> step14["14. Download Model Info"]
-    step14 --> step15["15. Deploy Model to Endpoint"]
-    step15 --> step16["16. Setup Monitoring"]
-    step16 --> step17["17. Pipeline Complete"]
-    
-    %% User interaction starts after deployment
-    step17 --> step18["18. User Makes Prediction Requests"]
-    
-    %% AWS Services supporting the flow
-    step4 -.-> s3[(S3 Bucket\nmy-mlops-demo-bucket-lhc)]
-    step5 -.-> sm1[SageMaker Training\nml.m5.xlarge]
-    step8 -.-> sm2[SageMaker Evaluation]
-    step12 -.-> sm3[SageMaker Model Registry\nSentimentAnalysisModels]
-    step15 -.-> sm4[SageMaker Endpoint\nsentiment-analysis-endpoint]
-    step16 -.-> mon[CloudWatch Monitoring\nHourly Schedule]
 
-    %% Styling
-    classDef process fill:#d4f1f9,stroke:#05386b,stroke-width:1px,color:black
-    classDef decision fill:#ffccbc,stroke:#ff5722,stroke-width:1px,color:black
-    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:1px,color:black
-    classDef endpoint fill:#e8f5e9,stroke:#388e3c,stroke-width:1px,color:black
-    
-    class step1,step2,step3,step4,step5,step6,step7,step8,step10,step11,step12,step13,step14,step15,step16,step17,step18 process
-    class decision decision
-    class s3,sm1,sm2,sm3,sm4,mon aws
-    class end1 endpoint
- 
-``` 
+## Diagram
+
+![Diagram of Architecture](diagram.png)
+
 
 s3 bucket:
 
