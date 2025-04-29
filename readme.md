@@ -12,7 +12,7 @@ flowchart TD
     end
 
     subgraph "AWS Services"
-        D[S3: Data Storage]
+        D[S3: Data Storage\nmy-mlops-demo-bucket]
         E[SageMaker: Training Job]
         F[SageMaker: Model Evaluation]
         G[SageMaker: Model Registry]
@@ -36,7 +36,6 @@ flowchart TD
     %% Inference Flow
     J[User/Application] -->|12. Request prediction| H
     H -->|13. Return prediction| J
-
  
 ``` 
 
