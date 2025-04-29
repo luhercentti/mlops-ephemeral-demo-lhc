@@ -1,18 +1,3 @@
-├── .github
-│   └── workflows
-│       └── mlops.yml
-├── scripts
-│   ├── train_model.py
-│   ├── evaluate_model.py
-│   ├── register_model.py
-│   ├── deploy_model.py
-│   └── setup_monitoring.py
-├── train.py
-└── data
-    ├── train.csv
-    └── test.csv
-
-
 Implementation Details
 The GitHub Actions workflow I've created:
 
