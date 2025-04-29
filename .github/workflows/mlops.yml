@@ -12,7 +12,7 @@ jobs:
   train-model:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -77,7 +77,7 @@ jobs:
     needs: train-model
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -98,7 +98,7 @@ jobs:
           pip install boto3 sagemaker pandas scikit-learn
       
       - name: Download training info
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: training-info
       
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.evaluate-model.outputs.model_approved == 'true' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -151,7 +151,7 @@ jobs:
           pip install boto3 sagemaker
       
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: evaluation-results
       
@@ -177,7 +177,7 @@ jobs:
     needs: register-model
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -198,7 +198,7 @@ jobs:
           pip install boto3 sagemaker
       
       - name: Download model info
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: model-info
       

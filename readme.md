@@ -1,20 +1,8 @@
-Implementation Details
-The GitHub Actions workflow I've created:
 
-Separates each MLOps phase into jobs:
+s3 bucket:
 
-train-model
-evaluate-model
-register-model
-deploy-model
+my-mlops-demo-bucket
 
-
-Uses artifact passing between jobs to maintain state
-Has conditional execution (only register and deploy if model meets quality thresholds)
-Stores AWS credentials securely as GitHub Secrets
-Works with the same AWS services (SageMaker, S3, etc.)
-
-///
 
 Detailed Data Flow Explanation
 
@@ -83,7 +71,6 @@ SageMaker Endpoints: Hosts models for real-time inference
 CloudWatch: Monitors model performance and detects data drift
 
 Sample Data Explanation
-The sample CSV files I've provided:
 
 train.csv: Contains 100 customer reviews with sentiment labels (1=positive, 0=negative)
 test.csv: Contains 30 additional reviews for testing model performance
@@ -100,3 +87,10 @@ It demonstrates text classification, a common ML task
 The balanced classes (positive/negative) help with model evaluation
 It's realistic enough to show meaningful results
 
+
+
+Check AWS Console to see the created resources:
+
+SageMaker training jobs
+SageMaker models and endpoints
+CloudWatch monitoring configurations
