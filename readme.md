@@ -1,6 +1,4 @@
-
-
-## Diagram
+# ML Deployment Diagram
 
 ```mermaid
 flowchart TD
@@ -45,6 +43,7 @@ flowchart TD
     style G fill:#A5D4FF,stroke:#0066CC
     style H fill:#A5D4FF,stroke:#0066CC
     style I fill:#D5A5FF,stroke:#8000CC
+
 
 s3 bucket:
 
