@@ -37,6 +37,7 @@ flowchart TD
     J[User/Application] -->|12. Request prediction| H
     H -->|13. Return prediction| J
 
+ 
 ``` 
 
 s3 bucket:
