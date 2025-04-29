@@ -37,8 +37,6 @@ flowchart TD
     J[User/Application] -->|12. Request prediction| H
     H -->|13. Return prediction| J
 
-    style D fill:#FFD2A5,stroke:#FF8000
-    style E fill:#A5D4FF,stroke:#0066CC
     style F fill:#A5D4FF,stroke:#0066CC
     style G fill:#A5D4FF,stroke:#0066CC
     style H fill:#A5D4FF,stroke:#0066CC
