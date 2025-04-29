@@ -37,7 +37,6 @@ flowchart TD
     J[User/Application] -->|12. Request prediction| H
     H -->|13. Return prediction| J
 
-    style H fill:#A5D4FF,stroke:#0066CC
 ``` 
 
 s3 bucket:
