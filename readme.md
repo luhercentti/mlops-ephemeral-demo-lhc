@@ -1,5 +1,6 @@
 # ML Deployment Diagram
 
+```mermaid
 flowchart TD
     %% Starting point
     start(("Trigger: Push/PR\nto Main Branch"))
