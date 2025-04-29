@@ -1,6 +1,6 @@
 
 
-![Diagram of Architecture](archidiagram.png)
+![Diagram of Architecture](.png)
 
 
 s3 bucket:
