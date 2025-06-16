@@ -94,6 +94,144 @@ The balanced classes (positive/negative) help with model evaluation
 It's realistic enough to show meaningful results
 
 
+--------------------------------
+Description of scripts:
+
+1- train_model.py - Model Training Orchestration
+What it does:
+
+Launches a Managed Training Job in SageMaker:
+
+Provisions temporary compute (ml.m5.xlarge by default).
+
+Automatically terminates resources after training completes (pay-per-use).
+
+Configures the Training Environment:
+
+Uses SageMaker's pre-built Scikit-Learn container (0.23-1 version).
+
+Runs your custom training code (train.py – the actual ML logic).
+
+Passes hyperparameters (e.g., max_depth=5) as JSON.
+
+Handles Data Flow:
+
+Input: Reads training/test data from S3 (s3://bucket/prefix/data/train.csv).
+
+Output: Saves model artifacts to S3 (s3://bucket/prefix/output/).
+
+Tracks the Training Job:
+
+Saves the job name (training_job_name.txt) for downstream steps (evaluation/deployment).
+
+
+
+2- evaluate_model.py - Model Validation
+What it does:
+
+Downloads evaluation metrics (accuracy, precision, recall) from S3 after training.
+
+Falls back to dummy metrics if evaluation fails (demo safety net).
+
+Prints metrics for GitHub Actions to use in approval gates.
+
+Key AWS Services:
+
+SageMaker Training Jobs (to fetch output location)
+
+S3 (stores evaluation JSON)
+
+Production Considerations:
+
+Replace with SageMaker Model Monitor for drift detection.
+
+Add business metrics (e.g., ROI impact).
+
+Enforce minimum thresholds (fail pipeline if accuracy < X%).
+
+3. register_model.py - Model Governance
+What it does:
+
+Registers a trained model in the SageMaker Model Registry.
+
+Creates a model package group if it doesn't exist.
+
+Attaches evaluation metrics from S3.
+
+Sets status to "Approved" (auto-approval for demo).
+
+Key AWS Services:
+
+SageMaker Model Registry
+
+S3 (stores evaluation metrics)
+
+Production Considerations:
+
+Manual approval workflow (change ModelApprovalStatus='PendingManualApproval').
+
+Add metadata tags (e.g., training data version).
+
+Store bias/fairness metrics for compliance.
+
+4- deploy_model.py - Model Deployment
+What it does:
+
+Deploys a registered model from SageMaker Model Registry to a real-time endpoint.
+
+Checks if an endpoint exists:
+
+If yes → Updates the endpoint with the new model (zero-downtime deployment).
+
+If no → Creates a new endpoint.
+
+Uses ModelPackage to pull the approved model artifact from the registry.
+
+Key AWS Services:
+
+SageMaker Model Registry
+
+SageMaker Endpoints (real-time inference)
+
+CloudWatch (implicitly for endpoint metrics)
+
+Production Considerations:
+
+Add auto-scaling (scaling_policy in boto3).
+
+Use blue/green deployments for critical models.
+
+Deploy to multiple regions if global.
+
+5. setup_monitoring.py - Production Monitoring
+What it does:
+
+Enables data capture for all endpoint requests/responses.
+
+Creates a baseline from training data.
+
+Sets up a cron-based monitoring schedule (e.g., hourly checks).
+
+Uses Model Monitor to detect data drift.
+
+Key AWS Services:
+
+SageMaker Model Monitor
+
+S3 (stores captured data)
+
+CloudWatch (alerts on anomalies)
+
+Production Considerations:
+
+Monitor feature drift (not just data schema).
+
+Add custom monitoring scripts for business rules.
+
+Set up SNS alerts for critical failures.
+
+
+
 
 Check AWS Console to see the created resources:
 
